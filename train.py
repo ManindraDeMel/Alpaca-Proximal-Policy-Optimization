@@ -3,7 +3,7 @@ from stable_baselines3 import PPO
 from trading_env import TradingEnv
 
 # Initialize your API here
-api = REST('PKV6P7C3XAWBB8CEGM0T', 'YnYdBSPYUROHH8c7Ozlbud1qudV8SLcOtWSqBgN2', base_url='https://paper-api.alpaca.markets')
+api = REST('PKZABUTATLNSTGGE3X1Y', 'WgULwt9TOHq0GCVHz6bqur6JSnCY2GSWovSKg7gE', base_url='https://paper-api.alpaca.markets')
 
 # Initialize environment
 env = TradingEnv(api, 'AAPL')

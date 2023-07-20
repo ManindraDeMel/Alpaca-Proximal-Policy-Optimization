@@ -20,7 +20,8 @@ class TradingEnv(gym.Env):
         self.previous_balance = starting_balance
         self.balance_history = [starting_balance]  # Initialize the balance history
 
-        self.percentages = {i: (i % 10 or 10) / 10 for i in range(21)}  # Maps actions to percentages
+        self.percentages = {i: (i % 10 or 10) / 10 if i != 21 else 0 for i in range(22)}
+
 
         self.utils = TradingUtils(self.api)
         self.action_space = spaces.Discrete(22)
@@ -32,20 +33,28 @@ class TradingEnv(gym.Env):
         action_pct = self.percentages[action]
         price = self.utils.get_latest_price(self.symbol)
         cash_available = self.utils.get_account_balance()
+        shares_available = self.utils.get_shares_held(self.symbol)
 
-        if action == 20:  # Hold
+        if action == 21:  # Hold
             reward = 0  # No reward for holding
-        elif action_pct <= 1.0:  # Buy
+        elif action <= 10:  # Buy
             num_shares_to_buy = min((action_pct * cash_available) // price, cash_available // price)
             if num_shares_to_buy * price > cash_available:
                 reward = -100  # Penalize if trying to buy more stocks than can afford
+            elif num_shares_to_buy == 0:
+                reward = -50  # Penalize if trying to buy zero stocks
             else:
                 self.utils.place_order(self.symbol, num_shares_to_buy, 'buy')
+                self.shares_held += num_shares_to_buy  # update the number of shares held
                 reward = 0  # No reward for valid buy action
-        elif action_pct > 1.0:  # Sell
-            num_shares_to_sell = action_pct // 2
-            self.utils.place_order(self.symbol, num_shares_to_sell, 'sell')
-            reward = 0  # No reward for selling
+        elif action > 10:  # Sell
+            num_shares_to_sell = min(action_pct * shares_available, shares_available)
+            if num_shares_to_sell == 0:
+                reward = -50  # Penalize if trying to sell zero stocks
+            else:
+                self.utils.place_order(self.symbol, num_shares_to_sell, 'sell')
+                self.shares_held -= num_shares_to_sell  # update the number of shares held
+                reward = 0  # No reward for selling
 
         # Calculate the reward
         new_balance = self.utils.get_account_balance()
@@ -62,7 +71,7 @@ class TradingEnv(gym.Env):
 
         # Check if the episode is done
         done = self.balance <= 0
-
+        print(reward)
         return next_state, reward, done, {}
 
 

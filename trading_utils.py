@@ -41,3 +41,10 @@ class TradingUtils:
 
     def get_account_balance(self):
         return float(self.api.get_account().cash)
+
+    def get_shares_held(self, symbol):
+        positions = self.api.list_positions()
+        for position in positions:
+            if position.symbol == symbol:
+                return int(position.qty)
+        return 0
