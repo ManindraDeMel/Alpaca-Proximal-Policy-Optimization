@@ -1,9 +1,19 @@
+from dotenv import load_dotenv
 from alpaca_trade_api.rest import REST
 from stable_baselines3 import PPO
 from trading_env import TradingEnv
+import os
+
+# Load environment variables
+load_dotenv()
+
+# Retrieve keys from environment variables
+api_key = os.getenv('ALPACA_API_KEY')
+secret_key = os.getenv('ALPACA_SECRET_KEY')
+base_url = os.getenv('ALPACA_BASE_URL')
 
 # Initialize your API here
-api = REST('PKZABUTATLNSTGGE3X1Y', 'WgULwt9TOHq0GCVHz6bqur6JSnCY2GSWovSKg7gE', base_url='https://paper-api.alpaca.markets')
+api = REST(api_key, secret_key, base_url=base_url)
 
 # Initialize environment
 env = TradingEnv(api, 'AAPL')
