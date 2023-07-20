@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 class TradingEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, api, symbol, starting_balance=100000):
+    def __init__(self, api, symbol, starting_balance=100000, stop_loss=0.2):
         super(TradingEnv, self).__init__()
 
         self.api = api
@@ -19,7 +19,7 @@ class TradingEnv(gym.Env):
         self.current_price = 0
         self.previous_balance = starting_balance
         self.balance_history = [starting_balance]  # Initialize the balance history
-
+        self.stop_loss = stop_loss
         self.percentages = {i: (i % 10 or 10) / 10 if i != 21 else 0 for i in range(22)}
 
 
@@ -70,14 +70,19 @@ class TradingEnv(gym.Env):
         next_state = next_state + [self.balance, self.shares_held]
 
         # Check if the episode is done
-        done = self.balance <= 0
-        print(reward)
+        if (self.previous_balance - self.balance) / self.previous_balance >= self.stop_loss:
+            done = True
+            self.reset()
+        else:
+            done = False
         return next_state, reward, done, {}
 
 
     def reset(self):
+        print("env reset")
         self.utils.reset_account_balance()
         self.balance = self.utils.get_account_balance()
+        self.previous_balance = self.balance
         self.balance_history = [self.balance]  # Reset the balance history
         self.shares_held = 0
 
@@ -93,7 +98,6 @@ class TradingEnv(gym.Env):
 
         # Combine balance, shares_held, and price_data to create the initial state
         initial_state = price_data + [self.balance, self.shares_held]
-        print(f"Initial state shape: {np.shape(initial_state)}")
 
         return initial_state
 
