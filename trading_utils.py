@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 class TradingUtils:
     def __init__(self, api):
         self.api = api
@@ -27,8 +28,16 @@ class TradingUtils:
             print(f"Error placing order: {str(e)}")
 
     def get_latest_price(self, symbol):
-        bars_info = self.api.get_barset(symbol, 'minute', limit=1)
-        return bars_info[symbol][0].c
+        # Calculate start and end dates
+        end = datetime.now() - timedelta(days=2)  # 1 day ago
+        start = end - timedelta(minutes=1)  # 1 minute before the end date
+
+        # Obtain the data
+        bars_info = self.api.get_bars(symbol, '1Min', start=start.strftime('%Y-%m-%d'), end=end.strftime('%Y-%m-%d')).df
+
+        # Return the latest closing price
+        return bars_info['close'].values[-1]
+
 
     def get_account_balance(self):
         return float(self.api.get_account().cash)
