@@ -28,7 +28,7 @@ The following libraries need to be installed for this project:
 You can install them with:
 
 ```bash
-pip install gym alpaca-trade-api numpy matplotlib
+pip install -r requirements.txt
 ```
 
 ## Running the Project
