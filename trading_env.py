@@ -41,7 +41,7 @@ class TradingEnv(gym.Env):
             if potential_buy_reward > cash_available or potential_sell_reward == 0:
                 reward = 10  # reward for profitable holding
             else:
-                reward = 0  # no reward for holding
+                reward = 2  # no reward for holding
         elif action <= 10:  # Buy
             num_shares_to_buy = min((action_pct * cash_available) // price, cash_available // price)
             if num_shares_to_buy * price > cash_available:
@@ -84,6 +84,9 @@ class TradingEnv(gym.Env):
             self.reset()
         else:
             done = False
+        
+        print(f"\nReward for this cycle is: {reward}\n")
+
         return next_state, reward, done, {}
 
 
