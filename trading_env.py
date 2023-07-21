@@ -21,7 +21,7 @@ class TradingEnv(gym.Env):
         self.balance_history = [starting_balance]  # Initialize the balance history
         self.stop_loss = stop_loss
         self.percentages = {i: (i % 10 or 10) / 10 if i != 21 else 0 for i in range(22)}
-
+        self.buy_prices = {}
 
         self.utils = TradingUtils(self.api)
         self.action_space = spaces.Discrete(22)
@@ -52,6 +52,8 @@ class TradingEnv(gym.Env):
                 try:
                     self.utils.place_order(self.symbol, num_shares_to_buy, 'buy')
                     self.shares_held += num_shares_to_buy  # update the number of shares held
+                    # Store the buy price for these shares
+                    self.buy_prices[num_shares_to_buy] = price  
                     reward = 0  # No reward for valid buy action
                 except Exception as e:
                     reward = -100  # Penalize if tried to buy more than available shares
@@ -60,10 +62,15 @@ class TradingEnv(gym.Env):
             num_shares_to_sell = min(action_pct * shares_available, shares_available)
             if num_shares_to_sell == 0:
                 reward = -50  # Penalize if trying to sell zero stocks
+        else:
+            avg_buy_price = sum(self.buy_prices.values()) / len(self.buy_prices)
+            if price > avg_buy_price:  # Compare the current price to the average buy price
+                reward = 1000  # Large reward for selling at a profit
             else:
-                self.utils.place_order(self.symbol, num_shares_to_sell, 'sell')
-                self.shares_held -= num_shares_to_sell  # update the number of shares held
-                reward = 0  # No reward for selling
+                reward = 0  # No reward for selling at a loss
+            self.utils.place_order(self.symbol, num_shares_to_sell, 'sell')
+            self.shares_held -= num_shares_to_sell  # update the number of shares held
+
 
         # Calculate the reward
         new_balance = self.utils.get_account_balance()
