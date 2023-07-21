@@ -7,13 +7,13 @@ This repository contains a custom reinforcement learning environment for stock t
 To get started with the project, clone this repository to your local machine.
 
 ```bash
-git clone https://github.com/<your_username>/stock-trading-rl.git
+git clone https://github.com/ManindraDeMel/Alpaca-Proximal-Policy-Optimization.git
 ```
 
 Next, navigate into the project's directory.
 
 ```bash
-cd stock-trading-rl
+cd Alpaca-Proximal-Policy-Optimization
 ```
 
 ## Prerequisites
