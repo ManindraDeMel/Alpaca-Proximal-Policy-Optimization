@@ -34,8 +34,11 @@ class TradingEnv(gym.Env):
         price = self.utils.get_latest_price(self.symbol)
         cash_available = self.utils.get_account_balance()
         shares_available = self.utils.get_shares_held(self.symbol)
+        # Initialize the reward
+        reward = 0
 
         if action == 21:  # Hold
+            print(f"Holding {self.symbol}")
             potential_buy_reward = (action_pct * cash_available) // price
             potential_sell_reward = action_pct * shares_available
             if potential_buy_reward > cash_available or potential_sell_reward == 0:
@@ -62,14 +65,14 @@ class TradingEnv(gym.Env):
             num_shares_to_sell = min(action_pct * shares_available, shares_available)
             if num_shares_to_sell == 0:
                 reward = -50  # Penalize if trying to sell zero stocks
-        else:
-            avg_buy_price = sum(self.buy_prices.values()) / len(self.buy_prices)
-            if price > avg_buy_price:  # Compare the current price to the average buy price
-                reward = 1000  # Large reward for selling at a profit
             else:
-                reward = 0  # No reward for selling at a loss
-            self.utils.place_order(self.symbol, num_shares_to_sell, 'sell')
-            self.shares_held -= num_shares_to_sell  # update the number of shares held
+                avg_buy_price = sum(self.buy_prices.values()) / len(self.buy_prices)
+                if price > avg_buy_price:  # Compare the current price to the average buy price
+                    reward = 1000  # Large reward for selling at a profit
+                else:
+                    reward = 0  # No reward for selling at a loss
+                self.utils.place_order(self.symbol, num_shares_to_sell, 'sell')
+                self.shares_held -= num_shares_to_sell  # update the number of shares held
 
 
         # Calculate the reward
