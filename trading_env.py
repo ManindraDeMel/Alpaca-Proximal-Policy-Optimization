@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 class TradingEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, api, symbol, starting_balance=100000, stop_loss=0.2):
+    def __init__(self, api, symbol, starting_balance=50000, stop_loss=0.2):
         super(TradingEnv, self).__init__()
 
         self.api = api
@@ -44,9 +44,13 @@ class TradingEnv(gym.Env):
             elif num_shares_to_buy == 0:
                 reward = -50  # Penalize if trying to buy zero stocks
             else:
-                self.utils.place_order(self.symbol, num_shares_to_buy, 'buy')
-                self.shares_held += num_shares_to_buy  # update the number of shares held
-                reward = 0  # No reward for valid buy action
+                try:
+                    self.utils.place_order(self.symbol, num_shares_to_buy, 'buy')
+                    self.shares_held += num_shares_to_buy  # update the number of shares held
+                    reward = 0  # No reward for valid buy action
+                except Exception as e:
+                    reward = -100  # Penalize if tried to buy more than available shares
+                    print(f"Error occurred: {str(e)}")
         elif action > 10:  # Sell
             num_shares_to_sell = min(action_pct * shares_available, shares_available)
             if num_shares_to_sell == 0:
@@ -70,7 +74,7 @@ class TradingEnv(gym.Env):
         next_state = next_state + [self.balance, self.shares_held]
 
         # Check if the episode is done
-        if (self.previous_balance - self.balance) / self.previous_balance >= self.stop_loss:
+        if  self.previous_balance * (1 - self.stop_loss) > self.balance:
             done = True
             self.reset()
         else:
@@ -78,14 +82,14 @@ class TradingEnv(gym.Env):
         return next_state, reward, done, {}
 
 
-    def reset(self):
-        print("env reset")
-        self.utils.reset_account_balance()
+    def reset(self):        
         self.balance = self.utils.get_account_balance()
         self.previous_balance = self.balance
         self.balance_history = [self.balance]  # Reset the balance history
         self.shares_held = 0
+        self.utils.sell_all_owned_shares()
 
+        print(f"env reset. Starting balance is {self.balance}")
         # Get the last 5 days of price data for the stock
 
         # Compute start and end dates

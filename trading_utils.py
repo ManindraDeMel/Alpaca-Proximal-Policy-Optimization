@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import math
 class TradingUtils:
     def __init__(self, api):
         self.api = api
@@ -9,13 +10,16 @@ class TradingUtils:
         account = self.api.get_account()
         return float(account.cash) - self.balance_offset
 
-    def reset_account_balance(self):
-        account = self.api.get_account()
-        current_balance = float(account.cash)
-        self.balance_offset = current_balance - self.initial_balance
-
     def place_order(self, symbol, qty, side='buy'):
         try:
+            # Round the quantity down to the nearest whole number
+            qty = math.floor(qty)
+            
+            # Make sure that we're not trying to buy/sell zero or less shares
+            if qty <= 0:
+                print("Quantity must be greater than 0")
+                return
+
             self.api.submit_order(
                 symbol=symbol,
                 qty=qty,
@@ -48,3 +52,8 @@ class TradingUtils:
             if position.symbol == symbol:
                 return int(position.qty)
         return 0
+
+    def sell_all_owned_shares(self):
+        positions = self.api.list_positions()
+        for position in positions:
+            self.place_order(position.symbol, int(position.qty), 'sell')
