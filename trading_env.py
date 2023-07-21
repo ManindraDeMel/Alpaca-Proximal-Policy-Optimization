@@ -36,7 +36,12 @@ class TradingEnv(gym.Env):
         shares_available = self.utils.get_shares_held(self.symbol)
 
         if action == 21:  # Hold
-            reward = 0  # No reward for holding
+            potential_buy_reward = (action_pct * cash_available) // price
+            potential_sell_reward = action_pct * shares_available
+            if potential_buy_reward > cash_available or potential_sell_reward == 0:
+                reward = 10  # reward for profitable holding
+            else:
+                reward = 0  # no reward for holding
         elif action <= 10:  # Buy
             num_shares_to_buy = min((action_pct * cash_available) // price, cash_available // price)
             if num_shares_to_buy * price > cash_available:
